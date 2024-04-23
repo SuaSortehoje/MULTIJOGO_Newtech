@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo da Velha</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+  body {
+      background:orange;
+  }
+#player1{
+    margin:5px;
+    width:30%;
+}
+#player2{
+    margin:5px;
+    width:30%;
+}
+    .board {
+      display: flex;
+      flex-direction: column;
+      
+    }
+
+    .row {
+      display: flex;
+    }
+
+    .cell {
+      width: 100px;
+      height: 100px;
+      border: 1px solid black;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+      margin:1px;
+      margin-right: 5px; /* Espaço horizontal entre os quadrados */
+    }
+
+    .cell:last-child {
+      margin-right: 0; /* Remove a margem do último quadrado em cada linha */
+    }
+
+    /* Estilos para o modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.4);
+    }
+
+    .modal-content {
+      background-color: #fefefe;
+      margin: 15% auto;
+      padding: 20px;
+      border: 1px solid #888;
+      width: 80%;
+      text-align: center;
+    }
+
+    /* Estilo para o botão "Iniciar Jogo" */
+    #startButton {
+      background-color:;
+      color: black;
+      margin-left:100px;
+      border-radius:10px;
+      height:35px;
+      margin:5px auto;
+      align-items:center;
+      justify-content:center;
+      display:flex;
+    }
+#startButton:focus {
+    background-color: green;
+      color: white;
+}
+    /* Estilo para o temporizador */
+    #timer {
+      font-size: 18px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Modal -->
+  <div id="winnerModal" class="modal">
+    <div class="modal-content">
+      <span id="winnerName"></span> venceu!
+      <button onclick="closeModal()">Fechar</button>
+    </div>
+  </div>
+
+  <h1>Jogo da Velha</h1>
+  <div id="players">
+    <div id="player1Div">
+      <input type="text" id="player1" placeholder="Jogador 1">
+      <span id="player1Wins">0</span>
+    </div>
+    <div id="player2Div">
+      <input type="text" id="player2" placeholder="Jogador 2">
+      <span id="player2Wins">0</span>
+    </div>
+    <button id="startButton" onclick="startGame()">Iniciar Jogo</button>
+    <div id="timer"></div>
+  </div>
+  <div id="board" class="board">
+    <div class="row">
+      <div class="cell" onclick="makeMove(0)"></div>
+      <div class="cell" onclick="makeMove(1)"></div>
+      <div class="cell" onclick="makeMove(2)"></div>
+    </div>
+    <div class="row">
+      <div class="cell" onclick="makeMove(3)"></div>
+      <div class="cell" onclick="makeMove(4)"></div>
+      <div class="cell" onclick="makeMove(5)"></div>
+    </div>
+    <div class="row">
+      <div class="cell" onclick="makeMove(6)"></div>
+      <div class="cell" onclick="makeMove(7)"></div>
+      <div class="cell" onclick="makeMove(8)"></div>
+    </div>
+  </div>
+  <script>
+    let currentPlayer;
+    let player1Name;
+    let player2Name;
+    let player1Wins = 0;
+    let player2Wins = 0;
+    let timeout;
+    let timeLeft;
+
+    function startGame() {
+      player1Name = document.getElementById('player1').value;
+      player2Name = document.getElementById('player2').value;
+      currentPlayer = 'X';
+      document.getElementById('player1Div').innerHTML = `<input type="text" id="player1" value="${player1Name}" readonly><span id="player1Wins">${player1Wins}</span><span> (Joga com X)</span>`;
+      document.getElementById('player2Div').innerHTML = `<input type="text" id="player2" value="${player2Name}" readonly><span id="player2Wins">${player2Wins}</span><span> (Joga com O)</span>`;
+      resetGame();
+      startTimer();
+    }
+
+    function startTimer() {
+      timeLeft = 180; // 3 minutos em segundos
+      updateTimer();
+      timeout = setInterval(() => {
+        timeLeft--;
+        updateTimer();
+        if (timeLeft === 0) {
+          document.getElementById('winnerName').textContent = "Empate";
+          document.getElementById('winnerModal').style.display = 'block';
+          clearInterval(timeout);
+        }
+      }, 1000); // Atualiza o temporizador a cada segundo
+    }
+
+    function updateTimer() {
+      let minutes = Math.floor(timeLeft / 60);
+      let seconds = timeLeft % 60;
+      document.getElementById('timer').textContent = `Tempo restante: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    }
+
+    function makeMove(index) {
+      let cell = document.querySelectorAll('.cell')[index];
+      if (!cell.textContent) {
+        cell.textContent = currentPlayer;
+        currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        checkWinner();
+      }
+    }
+
+    function checkWinner() {
+      let cells = document.querySelectorAll('.cell');
+      const winningConditions = [
+        [0, 1, 2],
+        [3, 4, 5],
+        [6, 7, 8],
+        [0, 3, 6],
+        [1, 4, 7],
+        [2, 5, 8],
+        [0, 4, 8],
+        [2, 4, 6]
+      ];
+
+      for (let condition of winningConditions) {
+        let [a, b, c] = condition;
+        if (cells[a].textContent && cells[a].textContent === cells[b].textContent && cells[a].textContent === cells[c].textContent) {
+          let winnerName = currentPlayer === 'X' ? player1Name : player2Name;
+          document.getElementById('winnerName').textContent = winnerName + ' venceu!';
+          document.getElementById('winnerModal').style.display = 'block';
+          clearInterval(timeout);
+          if (currentPlayer === 'X') {
+            player1Wins++;
+            document.getElementById('player1Wins').textContent = player1Wins;
+          } else {
+            player2Wins++;
+            document.getElementById('player2Wins').textContent = player2Wins;
+          }
+          return;
+        }
+      }
+    }
+
+    function resetGame() {
+      let cells = document.querySelectorAll('.cell');
+      cells.forEach(cell => {
+        cell.textContent = '';
+      });
+      document.getElementById('winnerModal').style.display = 'none';
+    }
+
+    function closeModal() {
+      document.getElementById('winnerModal').style.display = 'none';
+    }
+  </script>
+  desenvolvido por carlos-Newtech 
+</body>
+</html>
